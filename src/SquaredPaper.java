@@ -13,18 +13,18 @@ public class SquaredPaper extends JFrame {
    String ultimoorden = "";
    int ultimax = 0, ultimay = 0, aux = 0;
  
-   g.setColor(Color.yellow);
+   g.setColor(Color.blue);
    g.fillRect(0,0,x,y);
  
-   g.setColor(Color.green);
+   g.setColor(Color.cyan);
    for (int i = 0; i < y; i+=25) g.drawLine(0,i,x,i);
    for (int i = 0; i < x; i+=25) g.drawLine(i,0,i,y);
  
-   g.setColor(Color.red);
+   g.setColor(Color.black);
    g.drawLine(x/2,0,x/2,y);
    g.drawLine(0,y/2,x,y/2);
-  
-   g.setColor(Color.blue);  
+   
+   g.setColor(Color.red);  
   
     Connection conn;
     Statement sentencia;
@@ -42,22 +42,24 @@ public class SquaredPaper extends JFrame {
      ("jdbc:oracle:thin:@Rafa-Desktop:1521:xe", "raejimenezca", "bases2018");
       sentencia = conn.createStatement();
     } catch( SQLException e ) {
-      System.out.println("No hay conexi�n con la base de datos.");
+      System.out.println("No hay conexion con la base de datos.");
       return;
       }
        
     try {
-     resultado = sentencia.executeQuery("SELECT r1.orden AS orden, r1.coord_x AS a, r1.coord_y AS b, r2.coord_x AS c, r2.coord_y AS d FROM ruta r1, ruta r2 WHERE r1.orden = r2.orden-1 ORDER BY r1.orden");
+     resultado = sentencia.executeQuery("SELECT r1.id_bodega, r1.x AS X0, r1.y AS Y0, r2.x AS x1, r2.y AS Y1 FROM (SELECT id_bodega, x, y FROM BODEGA RB1 NATURAL JOIN (SELECT ID_BODEGA FROM RUTA GROUP BY(ID_BODEGA)) R) r1, (SELECT id_bodega, x, y FROM BODEGA RB1 NATURAL JOIN (SELECT ID_BODEGA FROM RUTA GROUP BY(ID_BODEGA)) R) r2 WHERE r1.id_bodega = r2.id_bodega-1 ORDER BY TO_NUMBER(r1.id_bodega)");
      while (resultado.next())
       {
-       g.drawString("Bod. " + resultado.getString("orden"),resultado.getInt("a"),resultado.getInt("b"));
-       g.drawLine(resultado.getInt("a"),resultado.getInt("b"),resultado.getInt("c"),resultado.getInt("d"));
+       g.drawString("Bod. " + resultado.getString("id_bodega"),resultado.getInt("X0"),resultado.getInt("Y0"));
+       g.drawLine(resultado.getInt("X0"),resultado.getInt("Y0"),resultado.getInt("X1"),resultado.getInt("Y1"));
        //Estas cuatro instrucciones que siguen son solo para pintar el punto final, es decir, �
        //mediante la instrucci�n g.drawString que est� luego de cerrar el ciclo while
-       aux = resultado.getInt("orden")+1;
+       aux = resultado.getInt("id_bodega")+1;
        ultimoorden = Integer.toString(aux);
-       ultimax =  resultado.getInt("c");
-       ultimay = resultado.getInt("d");
+       ultimax =  resultado.getInt("X1");
+       System.out.println("ultimax: " + ultimax);
+       ultimay = resultado.getInt("Y1");
+       System.out.println("ultimay: " + ultimay);
       }
       g.drawString("Bod. " + ultimoorden,ultimax, ultimay);
            

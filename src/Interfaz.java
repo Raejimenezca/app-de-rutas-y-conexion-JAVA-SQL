@@ -19,14 +19,17 @@ public class Interfaz extends javax.swing.JFrame {
     static Connection conn;
     static Statement sentencia;
     static ResultSet resultado;
+    static CallableStatement procedim;
     // inicio de la sentencia SQL 
-    String query = "DECLARE\n" +
-                    "    P BASES2.T_PROD;\n" +
-                    "    C BASES2.T_CANT;\n" +
-                    "BEGIN\n";
+    String query = "DECLARE" +
+                    "    P BASES2.T_PROD;" +
+                    "    C BASES2.T_CANT;" +
+                    "   BEGIN ";
     // continuacion de la sentencia SQL, se llenara por cada vez que se de click en el boton "enviar datos"
     String rest_of_query = "";
     int c = 0;
+    CallableStatement cStmt;
+    
     
     /**
      * Creates new form Interfaz
@@ -131,7 +134,7 @@ public class Interfaz extends javax.swing.JFrame {
                         .addComponent(enviar, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(19, 19, 19)
                         .addComponent(graficar, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(37, Short.MAX_VALUE))
+                .addContainerGap(38, Short.MAX_VALUE))
         );
 
         pack();
@@ -151,8 +154,8 @@ public class Interfaz extends javax.swing.JFrame {
         if(!(peticiones.containsKey(Integer.parseInt(product.getText())))){
             c+=1; //recordar reinicar al graficar la ruta
             peticiones.put(Integer.parseInt(product.getText()), Integer.parseInt(units.getText()));
-            rest_of_query = rest_of_query + "P(" + c + ") := " + product.getText() + ";\n";
-            rest_of_query = rest_of_query + "C(" + c + ") := " + units.getText() + ";\n";
+            rest_of_query = rest_of_query + "   P(" + c + ") := " + product.getText() + ";";
+            rest_of_query = rest_of_query + "   C(" + c + ") := " + units.getText() + ";";
         textArea1.append("Se solicitaron " + units.getText() + " Unidades de " + product.getText() + "\n");
         }else{
             textArea1.append("Ya se solicitó el máximo de pedidos por día de " + product.getText() + "\n");
@@ -164,8 +167,19 @@ public class Interfaz extends javax.swing.JFrame {
     }//GEN-LAST:event_enviarActionPerformed
 
     private void graficarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_graficarActionPerformed
-        SquaredPaper DrawWindow = new SquaredPaper();
-                
+                        
+        textArea1.setText("");
+        query = query + rest_of_query + "   BASES2.ruta2(P, C);" + " END;";
+        //System.out.println(query);
+        try {
+            cStmt = conn.prepareCall(query);
+            cStmt.execute();
+        }catch(SQLException e){
+            System.out.println ("El error es: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        SquaredPaper DrawWindow = new SquaredPaper();  
         DrawWindow.setSize(500,500);
         DrawWindow.setResizable(false);
         DrawWindow.setLocation(200, 50);
@@ -173,14 +187,18 @@ public class Interfaz extends javax.swing.JFrame {
         DrawWindow.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         DrawWindow.setVisible(true);
         
-        query = query + rest_of_query + "BASES2.ruta2(P, C);\n" + "END;\n" + "/";
-        System.out.println(query);
-        try {
-            resultado = sentencia.executeQuery(query);
-            System.out.println(resultado);
+        // mostrar en el 'textArea1' los resultados
+        try{
+            resultado = sentencia.executeQuery("SELECT * FROM RUTA ORDER BY(id_bodega)");
+            while(resultado.next()){
+                textArea1.append("Se pueden conseguir " + resultado.getInt("cantidad") + " unidades del producto " + resultado.getInt("id_producto") + " en la bodega " + resultado.getInt("id_bodega") + "\n");
+            }
+            conn.close();
         }catch(SQLException e){
-            System.out.println("La consulta está mal definida");
+            System.out.println ("El error es: " + e.getMessage());
+            e.printStackTrace();
         }
+        
     }//GEN-LAST:event_graficarActionPerformed
 
     /**
@@ -203,7 +221,7 @@ public class Interfaz extends javax.swing.JFrame {
             System.out.println("No hay conexión con la base de datos.");
             return;
         }
-        try{
+        /*try{
             System.out.println("Seleccionando...");
             resultado = sentencia.executeQuery("SELECT codigo, nom, salario FROM empleado");
             while (resultado.next()){
@@ -212,7 +230,7 @@ public class Interfaz extends javax.swing.JFrame {
             conn.close(); // Cierre de la conexión
         } catch(SQLException e){
            System.out.println("Error: " + e.getMessage()); 
-        }
+        }*/
         System.out.println("Consulta finalizada.");//<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
